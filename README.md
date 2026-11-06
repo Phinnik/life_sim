@@ -3,8 +3,8 @@
 ## Build and run
 
 ```sh
-git clone --depth -o  https://github.com/libsdl-org/SDL.git vendored/SDL
-rm -rf vendored/SDL/s.git
+git clone --depth 1 https://github.com/libsdl-org/SDL.git vendored/SDL
+rm -rf vendored/SDL/.git
 
 make configure
 make

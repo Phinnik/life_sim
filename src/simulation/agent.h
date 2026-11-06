@@ -12,7 +12,7 @@
 
 typedef struct AgentsSoA
 {
-#define declare_attribute(type, name) type *name;
+#define declare_attribute(type, name) type *name;   
     AGENT_FIELDS(declare_attribute)
 #undef declare_attribute
     int count;
