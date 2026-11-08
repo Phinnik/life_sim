@@ -6,22 +6,23 @@
 #include "simulation/boids/render.h"
 
 // Rendering settings
-#define WINDOW_HEIGHT 800
-#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 1920
+#define WINDOW_WIDTH 1080
 #define FPS 60
 #define MS_PER_FRAME 1 * 1000/ FPS
-#define UPS 1000
+#define UPS 300
 #define MS_PER_UPDATE 1 * 1000 / UPS
 #define WINDOW_NAME "boids"
+#define TRAIL_LENGTH 200
 
 // Simulation settings
 #define NUM_BOIDS 500
 #define HEIGHT WINDOW_HEIGHT
 #define WIDTH WINDOW_WIDTH
 #define MAX_SPEED 1.5f
-#define MAX_FORCE 1.5f
-#define PERCEPTION 100
-#define SEPARATION_WEIGHT 1.0f
+#define MAX_FORCE 0.5f
+#define PERCEPTION 50
+#define SEPARATION_WEIGHT 1.3f
 #define ALIGNMENT_WEIGHT 1.0f
 #define COHESION_WEIGHT 1.0f
 
@@ -55,7 +56,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
     }
     if (now - st->last_rendered > MS_PER_FRAME)
     {
-        SDL_SetRenderDrawColor(st->renderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(st->renderer, 8, 12, 24, 255);
         SDL_RenderClear(st->renderer);
         render_frame(st->renderer, st->sim);
         SDL_RenderPresent(st->renderer);
@@ -81,6 +82,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         SEPARATION_WEIGHT,
         ALIGNMENT_WEIGHT,
         COHESION_WEIGHT,
+        TRAIL_LENGTH,
         &st->seed);
 
     if (!st->sim)

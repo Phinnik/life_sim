@@ -10,6 +10,7 @@ typedef struct
     vec2 pos;
     vec2 velocity;
     vec2 prev_pos;
+    vec2* trail;
     vec2 prev_velocity;
 } Boid;
 
@@ -25,6 +26,7 @@ typedef struct
     float separation_weight;
     float alignment_weight;
     float cohesion_weight;
+    int trail_length;
 } BoidsSimulation;
 
 BoidsSimulation *boids_new(
@@ -37,6 +39,7 @@ BoidsSimulation *boids_new(
     float separation_weight,
     float alignment_weight,
     float cohesion_weight,
+    int trail_length,
     uint32_t *seed
 );
 void boids_free(BoidsSimulation *sim);

@@ -14,6 +14,7 @@ BoidsSimulation *boids_new(
     float separation_weight,
     float alignment_weight,
     float cohesion_weight,
+    int trail_length,
     uint32_t *seed)
 {
     BoidsSimulation *sim = malloc(sizeof(BoidsSimulation));
@@ -28,8 +29,8 @@ BoidsSimulation *boids_new(
 
     for (size_t i = 0; i < num_boids; i++)
     {
-        sim->boids[i].pos.x = (rand_float(seed) * 0.5f + 0.25f) * width;
-        sim->boids[i].pos.y = (rand_float(seed) * 0.5f + 0.25f) * height;
+        sim->boids[i].pos.x = (float)width / 2 + (rand_float(seed) - 0.5f) * 100;
+        sim->boids[i].pos.y = (float)height / 2 + (rand_float(seed) - 0.5f) * 100;
         sim->boids[i].prev_pos.x = sim->boids[i].pos.x;
         sim->boids[i].prev_pos.y = sim->boids[i].pos.y;
 
@@ -37,6 +38,13 @@ BoidsSimulation *boids_new(
         sim->boids[i].velocity.y = (rand_float(seed) - 0.5f) * max_speed * 2;
         sim->boids[i].prev_velocity.x = sim->boids[i].velocity.x;
         sim->boids[i].prev_velocity.y = sim->boids[i].velocity.y;
+
+        sim->boids[i].trail = malloc(sizeof(vec2) * trail_length);
+        if (!sim->boids[i].trail)
+            // TODO: deallocate all boids
+            return NULL;
+        for (size_t j = 0; j < trail_length; j++)
+            sim->boids[i].trail[j] = sim->boids[i].prev_pos;
     }
 
     sim->num_boids = num_boids;
@@ -48,6 +56,7 @@ BoidsSimulation *boids_new(
     sim->separation_weight = separation_weight;
     sim->alignment_weight = alignment_weight;
     sim->cohesion_weight = cohesion_weight;
+    sim->trail_length = trail_length;
     return sim;
 }
 
@@ -117,6 +126,11 @@ static void boid_update(BoidsSimulation *sim, int idx)
 
     sim->boids[idx].velocity = self.velocity;
     sim->boids[idx].pos = vec2_add(self.prev_pos, self.velocity);
+
+    // Rotate trail
+    for (size_t i = 1; i < sim->trail_length; i++)
+        sim->boids[idx].trail[i-1] = sim->boids[idx].trail[i];
+    sim->boids[idx].trail[sim->trail_length-1] = self.prev_pos;
 
     if (sim->boids[idx].pos.x < 0)
         sim->boids[idx].pos.x += sim->width;
