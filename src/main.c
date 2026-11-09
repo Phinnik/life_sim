@@ -6,10 +6,10 @@
 #include "simulation/boids/render.h"
 
 // Rendering settings
-#define WINDOW_HEIGHT 1920
-#define WINDOW_WIDTH 1080
+#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH 800
 #define FPS 60
-#define MS_PER_FRAME 1 * 1000/ FPS
+#define MS_PER_FRAME 1 * 1000 / FPS
 #define UPS 300
 #define MS_PER_UPDATE 1 * 1000 / UPS
 #define WINDOW_NAME "boids"
@@ -26,6 +26,11 @@
 #define ALIGNMENT_WEIGHT 1.0f
 #define COHESION_WEIGHT 1.0f
 
+// #define MAX_FRAMES (FPS * 2 * 60)
+#ifdef MAX_FRAMES
+#include "render_capture.c"
+#endif // #ifdef MAX_FRAMES
+
 typedef struct appstate_t
 {
     SDL_Window *window;
@@ -34,6 +39,9 @@ typedef struct appstate_t
     BoidsSimulation *sim;
     uint64_t last_updated;
     uint64_t last_rendered;
+    uint64_t updates;
+    uint64_t frames;
+    SDL_Texture *capture_texture;
 } appstate_t;
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
@@ -46,6 +54,24 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
+#ifdef MAX_FRAMES
+    appstate_t *st = (appstate_t *)appstate;
+    if (st->updates < MAX_FRAMES)
+    {
+        boids_step(st->sim);
+
+        SDL_SetRenderTarget(st->renderer, st->capture_texture);
+        SDL_SetRenderDrawColor(st->renderer, 8, 12, 24, 255);
+        SDL_RenderClear(st->renderer);
+        render_frame(st->renderer, st->sim);
+        output_frame(st->renderer);
+        SDL_SetRenderTarget(st->renderer, NULL);
+        SDL_RenderPresent(st->renderer);
+        st->updates++;
+        return SDL_APP_CONTINUE;
+    }
+    return SDL_APP_SUCCESS;
+#else
     appstate_t *st = (appstate_t *)appstate;
     const uint32_t now = SDL_GetTicks();
 
@@ -63,6 +89,7 @@ SDL_AppResult SDL_AppIterate(void *appstate)
         st->last_rendered = now;
     }
     return SDL_APP_CONTINUE;
+#endif // #ifdef MAX_FRAMES
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {}
@@ -99,12 +126,28 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char *argv[])
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("Life simulator", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE,
-                                     &st->window, &st->renderer))
+    if (!SDL_CreateWindowAndRenderer(
+            "Life simulator",
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE,
+            &st->window, &st->renderer))
     {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
+    st->capture_texture = SDL_CreateTexture(
+        st->renderer,
+        SDL_PIXELFORMAT_RGBA32,
+        SDL_TEXTUREACCESS_TARGET,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT);
+
+    if (!st->capture_texture)
+    {
+        SDL_Log("Couldn't create capture texture: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
     SDL_SetRenderLogicalPresentation(st->renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
     return SDL_APP_CONTINUE;
